@@ -720,14 +720,17 @@ function OnEventFired(EVENT_ID) {
 ::OnGameEvent_player_hurt_raw <- function (eventData) {
 	//EntFire("scr","RunScriptCode","FindActivator(" + player.GetName() + ")");
 	//ScriptPrintMessageChatAll("Handle : " + player.GetName() + attacker.GetName());
-	local player = GetPlayerForUserID(eventData["userid"]);
-	local attacker = GetPlayerForUserID(eventData["attacker"]);
-	local dmg_health = eventData.dmg_health;
-	local weapon = eventData.weapon;
-	local para = 0;
-	if(weapon == "knife")
-		para = 1;
-	EntFire("script","RunScriptCode","Lis(" + player.GetName() + "," + attacker.GetName() + "," + para + "," + dmg_health + ")");
+    local player, attacker, dmg, weapon;
+    try {
+	    player = GetPlayerForUserID(eventData["userid"]);
+	    attacker = GetPlayerForUserID(eventData["attacker"]);
+        dmg = eventData.dmg_health;
+        weapon = eventData.weapon;
+    } catch(e) {
+        return;
+    }
+
+    EntFire("script","RunScriptCode", format("OnHurt(\"%s\",\"%s\",\"%s\",%d)", player.GetName(), attacker.GetName(), weapon, dmg));;
 }
 
 
@@ -735,9 +738,14 @@ function OnEventFired(EVENT_ID) {
 ::OnGameEvent_player_death_raw <- function (eventData) {
 	//EntFire("scr","RunScriptCode","FindActivator(" + player.GetName() + ")");
 	//ScriptPrintMessageChatAll("Handle : " + player.GetName() + attacker.GetName());
-	local player = GetPlayerForUserID(eventData["userid"]);
-	local attacker = GetPlayerForUserID(eventData["attacker"]);
+    local player, attacker;
+    try {
+	    player = GetPlayerForUserID(eventData["userid"]);
+	    attacker = GetPlayerForUserID(eventData["attacker"]);
+    } catch(e) {    
+        return;
+    }
 
-	EntFire("script","RunScriptCode","Dea(" + player.GetName() + "," + attacker.GetName() + ")");
+
+	EntFire("script","RunScriptCode",format("Dea(\"%s\",\"%s\")", player.GetName(), attacker.GetName()));
 }
-
