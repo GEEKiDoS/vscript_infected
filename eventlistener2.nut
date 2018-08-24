@@ -660,6 +660,9 @@ function userid_assigner(params) {
     if (::GameEventsCapturedPlayer != null && params.entity == 0) {
         local script_scope = ::GameEventsCapturedPlayer.GetScriptScope();
         script_scope.userid <- params.userid;
+        if("PlayerNameTable" in getroottable()) {
+            script_scope.username <- getroottable().PlayerNameTable[params.userid];
+        }
         ::GameEventsCapturedPlayer = null;
         return true
     }
@@ -667,8 +670,12 @@ function userid_assigner(params) {
 
 function OnEventFired(EVENT_ID) {
     if (EVENT_ID == EVENT_PLAYER_USE) {
-        if (userid_assigner(this.event_data)) {
-            return
+        try {
+            if (userid_assigner(this.event_data)) {
+                return
+            }
+        } catch (ex) {
+
         }
     }
     if ("event_data" in this) {
@@ -716,6 +723,8 @@ function OnEventFired(EVENT_ID) {
 }
 */
 
+error_times <- 0;
+
 //监听伤害
 ::OnGameEvent_player_hurt_raw <- function (eventData) {
 	//EntFire("scr","RunScriptCode","FindActivator(" + player.GetName() + ")");
@@ -727,12 +736,18 @@ function OnEventFired(EVENT_ID) {
         dmg = eventData.dmg_health;
         weapon = eventData.weapon;
     } catch(e) {
+        if(error_times >= 15) {
+            ScriptPrintMessageChatAll("检测到感染功能失效, 正在重启游戏.....");
+            SendToConsoleServer("mp_restartgame 1");
+        }
+
+        error_times ++;
+
         return;
     }
 
     EntFire("script","RunScriptCode", format("OnHurt(\"%s\",\"%s\",\"%s\",%d)", player.GetName(), attacker.GetName(), weapon, dmg));;
 }
-
 
 //监听死亡
 ::OnGameEvent_player_death_raw <- function (eventData) {
@@ -748,4 +763,16 @@ function OnEventFired(EVENT_ID) {
 
 
 	EntFire("script","RunScriptCode",format("Dea(\"%s\",\"%s\")", player.GetName(), attacker.GetName()));
+}
+
+::OnGameEvent_player_connect_raw <- function (eventData) {
+    if(!("PlayerNameTable" in getroottable())) {
+        getroottable().PlayerNameTable <- {};
+    }
+
+    try {
+        getroottable().PlayerNameTable[eventData["userid"]] <- eventData["name"];
+    } catch(ex) {
+        throw ex;   
+    }
 }
